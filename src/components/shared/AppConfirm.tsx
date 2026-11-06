@@ -39,13 +39,13 @@ export function AppConfirm({
   }, [open, onCancel])
 
   if (!open || !mounted) return null
-  // overlay-root is a zero-sized, pointer-events:none mount point; dialogs
-  // rendered there are visible but cannot receive clicks.
-  const root = document.body
+  // 必须挂到 #overlay-root 里：它自带 z-index:999999 的层叠上下文，
+  // 挂到 body 上的确认框（即使 z-10000）会被里面的全屏遮罩盖住，按钮点不到。
+  const root = document.getElementById('overlay-root') ?? document.body
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/25 p-4"
+      className="pointer-events-auto fixed inset-0 z-[1000000] flex items-center justify-center bg-black/25 p-4"
       onClick={(event) => {
         if (event.target === event.currentTarget) onCancel()
       }}

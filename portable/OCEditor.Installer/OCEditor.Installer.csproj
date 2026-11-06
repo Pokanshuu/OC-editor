@@ -19,8 +19,8 @@
     <EnableCompressionInSingleFile>false</EnableCompressionInSingleFile>
     <DebugType>None</DebugType>
     <DebugSymbols>false</DebugSymbols>
-    <Version>0.19.0</Version>
-    <FileVersion>0.19.0.0</FileVersion>
+    <Version>0.19.1</Version>
+    <FileVersion>0.19.1.0</FileVersion>
     <AssemblyTitle>OC editor 瀹夎绋嬪簭</AssemblyTitle>
     <Product>OC editor</Product>
     <Company>OC editor</Company>

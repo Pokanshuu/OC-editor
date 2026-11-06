@@ -37,6 +37,7 @@ function WorldCard({
   counts,
   active,
   manage,
+  canDelete,
   onEnter,
   onRename,
   onDelete,
@@ -45,6 +46,7 @@ function WorldCard({
   counts?: WorldContentCounts
   active: boolean
   manage: boolean
+  canDelete: boolean
   onEnter: () => void
   onRename: (name: string) => void
   onDelete: () => void
@@ -145,8 +147,9 @@ function WorldCard({
           <button
             type="button"
             onClick={onDelete}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-faint transition-colors hover:bg-error/10 hover:text-error"
-            title="删除世界观"
+            disabled={!canDelete}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-faint transition-colors hover:bg-error/10 hover:text-error disabled:cursor-not-allowed disabled:opacity-40"
+            title={canDelete ? '删除世界观' : '至少保留一个世界观'}
           >
             <Trash2 size={14} strokeWidth={2} />
           </button>
@@ -169,6 +172,7 @@ export function WorldPicker({ mode = 'gate', onClose }: WorldPickerProps) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [creating, setCreating] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<World | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -272,6 +276,7 @@ export function WorldPicker({ mode = 'gate', onClose }: WorldPickerProps) {
                 counts={world.id !== undefined ? counts[world.id] : undefined}
                 active={world.id === activeWorldId}
                 manage={mode === 'manage'}
+                canDelete={worlds.length > 1}
                 onEnter={() => {
                   if (world.id === undefined) return
                   selectWorld(world.id)
@@ -325,6 +330,7 @@ export function WorldPicker({ mode = 'gate', onClose }: WorldPickerProps) {
   const confirm = (
     <AppConfirm
       open={pendingDelete !== null}
+      busy={deleting}
       title="删除世界观"
       description={
         pendingDelete
@@ -333,10 +339,23 @@ export function WorldPicker({ mode = 'gate', onClose }: WorldPickerProps) {
       }
       confirmLabel="删除"
       danger
-      onCancel={() => setPendingDelete(null)}
-      onConfirm={() => {
-        if (pendingDelete?.id !== undefined) void removeWorld(pendingDelete.id)
+      onCancel={() => {
+        if (deleting) return
         setPendingDelete(null)
+      }}
+      onConfirm={() => {
+        const target = pendingDelete
+        if (!target?.id) return
+        setDeleting(true)
+        removeWorld(target.id)
+          .then(() => {
+            setPendingDelete(null)
+            setError(null)
+          })
+          .catch((cause: unknown) => {
+            setError(cause instanceof Error ? cause.message : '删除失败')
+          })
+          .finally(() => setDeleting(false))
       }}
     />
   )

@@ -4,7 +4,7 @@
   <Bundle
     Name="OC editor"
     Manufacturer="OC editor"
-    Version="0.19.0"
+    Version="0.19.1"
     UpgradeCode="C3D4E5F6-A7B8-4C9D-8E0F-1A2B3C4D5E6F"
     IconSourceFile="installer\oceditor.ico">
 

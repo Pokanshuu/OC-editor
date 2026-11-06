@@ -1,10 +1,13 @@
 ## 下载
 
-**最新版：v0.19.0（多世界观隔离 + 关系图/时间线修复）** → [GitHub Releases](https://github.com/nekibud/OC-editor/releases/latest)
+**最新版：v0.19.1（多世界观隔离 + 删除世界观修复 + 关系图/时间线修复）** → [GitHub Releases](https://github.com/nekibud/OC-editor/releases/latest)
 
-- [便携版 OC-editor-0.19.0-portable-win64.zip](https://github.com/nekibud/OC-editor/releases/download/v0.19.0/OC-editor-0.19.0-portable-win64.zip) ← **推荐：解压即用，不需要安装**
-- [安装程序 OC-editor-0.19.0-Setup.exe](https://github.com/nekibud/OC-editor/releases/download/v0.19.0/OC-editor-0.19.0-Setup.exe)
-- [微软商店 MSIX 包 OC-editor-0.19.0.msix](https://github.com/nekibud/OC-editor/releases/download/v0.19.0/OC-editor-0.19.0.msix)（Microsoft Store 提交用）
+- [便携版 OC-editor-0.19.1-portable-win64.zip](https://github.com/nekibud/OC-editor/releases/download/v0.19.1/OC-editor-0.19.1-portable-win64.zip) ← **推荐：解压即用，不需要安装**
+- [安装程序 OC-editor-0.19.1-Setup.exe](https://github.com/nekibud/OC-editor/releases/download/v0.19.1/OC-editor-0.19.1-Setup.exe)
+- [微软商店 MSIX 包 OC-editor-0.19.1.msix](https://github.com/nekibud/OC-editor/releases/download/v0.19.1/OC-editor-0.19.1.msix)（Microsoft Store 提交用）
+
+> **0.19.1 修复**：「管理世界观」里删除按钮被遮罩层挡住、点不动的问题；静默安装
+> （`--install`）在窗口创建前调用 `BeginInvoke` 崩溃的问题；至少保留一个世界观。
 
 > **0.19.0 重点**：先选世界观再创作（角色/事件/时间线/关系图按世界观隔离）；
 > 修复时间线超大年份卡死；修复同一对角色多条关系导致的闪屏与关系图空白页。
@@ -22,7 +25,7 @@
 
 本地优先的原创角色（OC）与世界观创作工作台。
 
-当前版本：**v0.19.0 · local-first**
+当前版本：**v0.19.1 · local-first**
 
 本仓库在原有角色 / 事件 / 国家 / 词条 / 时间线 / 关系图谱骨架上增量扩展，
 新增了**多世界观隔离**、**程序化世界地图生成器**与**可折叠树形表格**。运行时完全离线：无账号、无云同步、
@@ -90,6 +93,10 @@
 ---
 
 ## 截图
+
+| 选择世界观 | 管理世界观 |
+| --- | --- |
+| ![选择世界观](docs/screenshots/world-select.png) | ![管理世界观](docs/screenshots/world-manage.png) |
 
 | 地形 | 等高线 |
 | --- | --- |

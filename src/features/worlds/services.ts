@@ -134,8 +134,13 @@ export async function updateWorld(
 /**
  * 删除世界观：只做软删除，其中的创作内容保留在数据库里，
  * 但不再出现在任何列表中（避免误删整部作品）。
+ * 至少保留一个世界观，否则应用会进入“空选择页”。
  */
 export async function deleteWorld(id: number): Promise<void> {
+  const worlds = await listWorlds()
+  if (worlds.length <= 1 && worlds.some((world) => world.id === id)) {
+    throw new Error('至少保留一个世界观')
+  }
   await db.worlds.update(id, { deleted: true, updatedAt: Date.now() })
   if (getActiveWorldId() === id) {
     const remaining = await listWorlds()

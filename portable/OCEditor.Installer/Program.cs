@@ -235,6 +235,9 @@ internal sealed class InstallerForm : Form
     public void StartInstall(string target)
     {
         _pathBox.Text = target;
+        // 命令行安装（--install）发生在 Application.Run 之前，
+        // BeginInvoke 需要窗口句柄，这里先强制创建，否则静默安装会直接抛异常。
+        _ = Handle;
         BeginInvoke(() => InstallClicked(this, EventArgs.Empty));
     }
 
@@ -527,7 +530,7 @@ internal sealed class InstallerForm : Form
         using var key = Registry.CurrentUser.CreateSubKey(
             @"Software\Microsoft\Windows\CurrentVersion\Uninstall\OCEditor");
         key.SetValue("DisplayName", "OC editor");
-        key.SetValue("DisplayVersion", "0.18.3");
+        key.SetValue("DisplayVersion", typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "0.19.1");
         key.SetValue("Publisher", "OC editor");
         key.SetValue("InstallLocation", target);
         key.SetValue("DisplayIcon", $"{exe},0");

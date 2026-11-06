@@ -4,7 +4,7 @@
   <Package
     Name="OC editor"
     Manufacturer="OC editor"
-    Version="0.19.0"
+    Version="0.19.1"
     UpgradeCode="B7E6A0F2-1C3D-4E5F-9A8B-0C1D2E3F4A5B"
     Scope="perUser"
     InstallerVersion="500"
