@@ -1,16 +1,19 @@
 ## 下载
 
-**最新版：v0.20.1（.ocbak 分类导出/导入 + 小说 PNG 第三页修复）** → [GitHub Releases](https://github.com/nekibud/OC-editor/releases/latest)
+**最新版：v0.20.1（全功能回归修复 + .ocbak 分类导出/导入 + 小说 PNG 第三页修复）** → [GitHub Releases](https://github.com/nekibud/OC-editor/releases/latest)
 
 - [便携版 OC-editor-0.20.1-portable-win64.zip](https://github.com/nekibud/OC-editor/releases/download/v0.20.1/OC-editor-0.20.1-portable-win64.zip) ← **推荐：解压即用，不需要安装**
 - [安装程序 OC-editor-0.20.1-Setup.exe](https://github.com/nekibud/OC-editor/releases/download/v0.20.1/OC-editor-0.20.1-Setup.exe)
 - [微软商店 MSIX 包 OC-editor-0.20.1.msix](https://github.com/nekibud/OC-editor/releases/download/v0.20.1/OC-editor-0.20.1.msix)（Microsoft Store 提交用）
 
-> **0.20.1 新增**：每个分类都可以单独导出 `.ocbak`（角色/武器/宠物/事件/国家/世界观/自定义分类）。
+> **0.20.1 修复**：全量备份「清空并导入」后旧关系残留；切换世界观后 active map
+> 可能返回上一世界地图；小说分页时非章节最后一页标题错误。三轮全功能回归通过。
+
+> **0.20.0 新增**：每个分类都可以单独导出 `.ocbak`（角色/武器/宠物/事件/国家/世界观/自定义分类）。
 > 导入时软件会读取文件内容，按条目的实际形状判断类型，自动放进对应数据表并重连关系图；
 > 即使文件头写错，也不会把角色识别成国家。角色页同时提供“导出全部角色”。
 
-> **0.20.1 修复**：小说导出 PNG 时第三张固定出错——分页后 Tiptap 正文的字体状态被页码覆盖，
+> **0.20.0 修复**：小说导出 PNG 时第三张固定出错——分页后 Tiptap 正文的字体状态被页码覆盖，
 > 导致页首文字变小、留下大片空白。现在翻页会完整恢复字体、颜色和对齐方式。
 
 > **0.19.1 / 0.19.0**：多世界观隔离、删除世界观修复、关系图闪屏与时间线卡死修复。
