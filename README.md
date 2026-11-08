@@ -4,7 +4,6 @@
 
 - [便携版 OC-editor-0.20.1-portable-win64.zip](https://github.com/nekibud/OC-editor/releases/download/v0.20.1/OC-editor-0.20.1-portable-win64.zip) ← **推荐：解压即用，不需要安装**
 - [安装程序 OC-editor-0.20.1-Setup.exe](https://github.com/nekibud/OC-editor/releases/download/v0.20.1/OC-editor-0.20.1-Setup.exe)
-- [微软商店 MSIX 包 OC-editor-0.20.1.msix](https://github.com/nekibud/OC-editor/releases/download/v0.20.1/OC-editor-0.20.1.msix)（Microsoft Store 提交用）
 
 > **0.20.1 修复**：全量备份「清空并导入」后旧关系残留；切换世界观后 active map
 > 可能返回上一世界地图；小说分页时非章节最后一页标题错误。三轮全功能回归通过。
