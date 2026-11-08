@@ -1,17 +1,19 @@
 ## 下载
 
-**最新版：v0.19.1（多世界观隔离 + 删除世界观修复 + 关系图/时间线修复）** → [GitHub Releases](https://github.com/nekibud/OC-editor/releases/latest)
+**最新版：v0.20.0（.ocbak 分类导出/导入 + 小说 PNG 第三页修复）** → [GitHub Releases](https://github.com/nekibud/OC-editor/releases/latest)
 
-- [便携版 OC-editor-0.19.1-portable-win64.zip](https://github.com/nekibud/OC-editor/releases/download/v0.19.1/OC-editor-0.19.1-portable-win64.zip) ← **推荐：解压即用，不需要安装**
-- [安装程序 OC-editor-0.19.1-Setup.exe](https://github.com/nekibud/OC-editor/releases/download/v0.19.1/OC-editor-0.19.1-Setup.exe)
-- [微软商店 MSIX 包 OC-editor-0.19.1.msix](https://github.com/nekibud/OC-editor/releases/download/v0.19.1/OC-editor-0.19.1.msix)（Microsoft Store 提交用）
+- [便携版 OC-editor-0.20.0-portable-win64.zip](https://github.com/nekibud/OC-editor/releases/download/v0.20.0/OC-editor-0.20.0-portable-win64.zip) ← **推荐：解压即用，不需要安装**
+- [安装程序 OC-editor-0.20.0-Setup.exe](https://github.com/nekibud/OC-editor/releases/download/v0.20.0/OC-editor-0.20.0-Setup.exe)
+- [微软商店 MSIX 包 OC-editor-0.20.0.msix](https://github.com/nekibud/OC-editor/releases/download/v0.20.0/OC-editor-0.20.0.msix)（Microsoft Store 提交用）
 
-> **0.19.1 修复**：「管理世界观」里删除按钮被遮罩层挡住、点不动的问题；静默安装
-> （`--install`）在窗口创建前调用 `BeginInvoke` 崩溃的问题；至少保留一个世界观。
+> **0.20.0 新增**：每个分类都可以单独导出 `.ocbak`（角色/武器/宠物/事件/国家/世界观/自定义分类）。
+> 导入时软件会读取文件内容，按条目的实际形状判断类型，自动放进对应数据表并重连关系图；
+> 即使文件头写错，也不会把角色识别成国家。角色页同时提供“导出全部角色”。
 
-> **0.19.0 重点**：先选世界观再创作（角色/事件/时间线/关系图按世界观隔离）；
-> 修复时间线超大年份卡死；修复同一对角色多条关系导致的闪屏与关系图空白页。
-> 旧数据首次启动会自动归入「默认世界观」。
+> **0.20.0 修复**：小说导出 PNG 时第三张固定出错——分页后 Tiptap 正文的字体状态被页码覆盖，
+> 导致页首文字变小、留下大片空白。现在翻页会完整恢复字体、颜色和对齐方式。
+
+> **0.19.1 / 0.19.0**：多世界观隔离、删除世界观修复、关系图闪屏与时间线卡死修复。
 
 > **改名说明**：产品名已全面统一为 **OC editor**（程序 OCeditor.exe、快捷方式、安装目录、卸载项、
 > 微软商店显示名）。0.18.1 及更早版本名为 OC Studio，其数据会在首次启动时自动从
@@ -25,7 +27,7 @@
 
 本地优先的原创角色（OC）与世界观创作工作台。
 
-当前版本：**v0.19.1 · local-first**
+当前版本：**v0.20.0 · local-first**
 
 本仓库在原有角色 / 事件 / 国家 / 词条 / 时间线 / 关系图谱骨架上增量扩展，
 新增了**多世界观隔离**、**程序化世界地图生成器**与**可折叠树形表格**。运行时完全离线：无账号、无云同步、
@@ -85,9 +87,14 @@
 软删除，支持恢复和永久删除，30 天自动清理。
 
 **数据导入/导出**
-- JSON（`.ocbak`）或 ZIP（`oc-data.json` + `manifest.json` + `README.txt`）。
+- **.ocbak 分类备份（新增）**：角色、武器、宠物、事件、国家、世界观词条与自定义分类分别导出为 `.ocbak`。
+  - 导入端先看条目的实际字段（`name`/`title`、`time`、`system`、`entries` 等）判断类型，再落库；
+    文件头里的 `kind`/`table` 只作为形状不明确时的提示。
+  - 角色导出会携带关联国家/事件与关系线；导入后按新 ID 重连关系图，支持同一对角色多条关系。
+  - 每个分类页都有导出按钮；角色页额外提供“导出全部角色”。
+  - 导入策略：跳过重复 / 覆盖重复 / 保留两者。
+- JSON（`.ocbak`）或 ZIP（`oc-data.json` + `manifest.json` + `README.txt`）全量备份。
 - 包含角色、事件、国家、词条、标签、嵌入关系、地图 seed 与参数。
-- 4 种合并策略（跳过/覆盖/保留两者/清空导入）。
 - 导入时递归剥离外部图片 URL。
 
 ---
@@ -166,6 +173,7 @@ Next.js 16 · TypeScript · Tailwind CSS v4 · Tiptap · Dexie.js (IndexedDB) ·
 src/features/map/            地图生成器、Worker、视图、图例、剖面
 src/features/tree-table/     树形表格与内联编辑
 src/lib/zip.ts               store-only ZIP 写入 + deflate 读取
+src/lib/ocav.ts              .ocbak 分类导出/导入、ID 重映射、关系图同步
 src/lib/export.ts            JSON / ZIP 备份
 src/lib/import.ts            导入、合并策略与远程 URL 清洗
 src-tauri/tauri.conf.json    CSP、asset 协议、窗口配置
