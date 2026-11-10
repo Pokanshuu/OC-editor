@@ -100,11 +100,14 @@ pub fn run() {
     .plugin(tauri_plugin_fs::init())
     .setup(|app| {
       if cfg!(debug_assertions) {
-        app.handle().plugin(
-          tauri_plugin_log::Builder::default()
-            .level(log::LevelFilter::Info)
-            .build(),
-        )?;
+        // 日志文件目录在部分环境下不可写（安全软件 / 受限沙箱），
+        // 初始化失败只降级为无文件日志，不应让整个应用起不来。
+        let log_plugin = tauri_plugin_log::Builder::default()
+          .level(log::LevelFilter::Info)
+          .build();
+        if let Err(error) = app.handle().plugin(log_plugin) {
+          eprintln!("[warn] 日志插件初始化失败，已跳过文件日志: {error}");
+        }
       }
 
       use tauri::Manager;
