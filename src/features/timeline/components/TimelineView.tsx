@@ -2,6 +2,7 @@
 
 import { memo, useMemo, useCallback, useState, useRef, useEffect, useLayoutEffect, startTransition } from 'react'
 import { createPortal } from 'react-dom'
+import { useAnchoredPanel } from '@/hooks/useAnchoredPanel'
 import {
   DndContext,
   useDraggable,
@@ -347,34 +348,8 @@ function FilterSelect({
   options: FilterOption[]
   placeholder: string
 }) {
-  const [open, setOpen] = useState(false)
-  const triggerRef = useRef<HTMLButtonElement>(null)
-  const panelRef = useRef<HTMLDivElement>(null)
-  const [pos, setPos] = useState({ x: 0, y: 0 })
-
-  useEffect(() => {
-    if (open && triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect()
-      setPos({ x: rect.left, y: rect.bottom + 4 })
-    }
-  }, [open])
-
-  const handleClickOutside = useCallback((e: MouseEvent) => {
-    const target = e.target as Node
-    const overlay = document.getElementById('overlay-root')
-    if (triggerRef.current && !triggerRef.current.contains(target)) {
-      if (panelRef.current && !panelRef.current.contains(target)) {
-        if (overlay && overlay.contains(target)) return
-        setOpen(false)
-      }
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!open) return
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [open, handleClickOutside])
+  const { open, position, triggerRef, panelRef, togglePanel, closePanel } =
+    useAnchoredPanel<HTMLButtonElement>()
 
   const selectedLabel = options.find((o) => o.value === value)?.label ?? placeholder
 
@@ -382,26 +357,26 @@ function FilterSelect({
     <div>
       <button
         ref={triggerRef}
-        onClick={() => setOpen(!open)}
+        onClick={togglePanel}
         className="touch-feedback flex md:h-9 h-7 items-center gap-1 rounded border border-line bg-paper-card/60 md:px-3 px-2 md:text-sm text-[11px] text-ink transition-colors hover:border-line-hover"
       >
         <span className="max-w-[120px] truncate">{selectedLabel}</span>
         <ChevronDown size={16} strokeWidth={2} />
       </button>
 
-      {open
+      {open && position
         ? createPortal(
             <div
               ref={panelRef}
-              className="fixed z-30 mt-1 flex max-h-64 flex-col overflow-auto rounded-md border border-line bg-paper/85 backdrop-blur-lg p-1 shadow-none ring-1 ring-black/5 pointer-events-auto"
-              style={{ left: pos.x, top: pos.y }}
+              className="fixed z-30 flex max-h-64 flex-col overflow-auto rounded-md border border-line bg-paper/85 backdrop-blur-lg p-1 shadow-none ring-1 ring-black/5 pointer-events-auto"
+              style={{ left: position.x, top: position.y }}
             >
           {options.map((opt) => (
             <button
               key={opt.value}
               onClick={() => {
                 onChange(opt.value)
-                setOpen(false)
+                closePanel()
               }}
               className={`whitespace-nowrap rounded-sm px-3 py-1.5 text-left text-sm transition-colors ${
                 value === opt.value

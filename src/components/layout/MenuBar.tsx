@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { tauriReadClipboard } from '@/lib/tauri-clipboard'
 import { createPortal } from 'react-dom'
+import { useAnchoredPanel } from '@/hooks/useAnchoredPanel'
 import { Search, Users, Calendar, Flag, BookOpen, Minus, Maximize2, Minimize2, X, Check } from 'lucide-react'
 import { searchAllEntitiesFlat } from '@/lib/reference-registry'
 import { useEntityNavigate } from '@/components/layout/EntityNavigateContext'
@@ -116,7 +117,14 @@ export function MenuBar() {
 
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<GroupedResults[]>([])
-  const [isOpen, setIsOpen] = useState(false)
+  const {
+    open: isOpen,
+    position: panelPos,
+    triggerRef: searchWrapperRef,
+    panelRef,
+    openPanel: openSearchPanel,
+    closePanel: closeSearchPanel,
+  } = useAnchoredPanel<HTMLDivElement>({ matchWidth: true })
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [isMaximized, setIsMaximized] = useState(false)
   const [windowHost, setWindowHost] = useState<WindowHost>('browser')
@@ -180,15 +188,6 @@ export function MenuBar() {
     void startWindowDrag()
   }, [])
   const inputRef = useRef<HTMLInputElement>(null)
-  const panelRef = useRef<HTMLDivElement>(null)
-  const searchWrapperRef = useRef<HTMLDivElement>(null)
-  const [panelPos, setPanelPos] = useState({ x: 0, y: 0, width: 256 })
-
-  useEffect(() => {
-    if (!isOpen || !searchWrapperRef.current) return
-    const rect = searchWrapperRef.current.getBoundingClientRect()
-    setPanelPos({ x: rect.left, y: rect.bottom + 4, width: rect.width })
-  }, [isOpen])
 
   const flatItems = useMemo(
     () => results.flatMap((g) => g.items),
@@ -227,10 +226,10 @@ export function MenuBar() {
     const numId = Number(entity.id)
     if (Number.isNaN(numId)) return
     navigateToEntity(numId, entity.type)
-    setIsOpen(false)
+    closeSearchPanel()
     setQuery('')
     inputRef.current?.blur()
-  }, [navigateToEntity])
+  }, [navigateToEntity, closeSearchPanel])
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
@@ -243,10 +242,10 @@ export function MenuBar() {
       e.preventDefault()
       if (selectedItem) handleSelect(selectedItem)
     } else if (e.key === 'Escape') {
-      setIsOpen(false)
+      closeSearchPanel()
       inputRef.current?.blur()
     }
-  }, [flatItems, selectedItem, handleSelect])
+  }, [flatItems, selectedItem, handleSelect, closeSearchPanel])
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -254,12 +253,12 @@ export function MenuBar() {
         e.preventDefault()
         inputRef.current?.focus()
         inputRef.current?.select()
-        setIsOpen(true)
+        openSearchPanel()
       }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [])
+  }, [openSearchPanel])
 
   useEffect(() => {
     const el = panelRef.current
@@ -413,15 +412,15 @@ export function MenuBar() {
             ref={inputRef}
             type="text"
             value={query}
-            onChange={(e) => { setQuery(e.target.value); setIsOpen(true); setSelectedIndex(0) }}
-            onFocus={() => { if (results.length > 0) setIsOpen(true) }}
-            onBlur={() => { setTimeout(() => setIsOpen(false), 150) }}
+            onChange={(e) => { setQuery(e.target.value); openSearchPanel(); setSelectedIndex(0) }}
+            onFocus={() => { if (results.length > 0) openSearchPanel() }}
+            onBlur={() => { setTimeout(closeSearchPanel, 150) }}
             onKeyDown={handleKeyDown}
             placeholder="搜索..."
             className="h-8 w-40 rounded border border-line bg-black/5 dark:bg-white/5 pl-8 pr-3 text-sm text-ink placeholder:text-ink-faint transition-colors focus:border-line-hover focus:outline-none focus:bg-black/10 dark:focus:bg-white/10 sm:w-56 lg:w-64 xl:w-96"
           />
 
-          {isOpen
+          {isOpen && panelPos
             ? createPortal(
                 <div
                   ref={panelRef}
