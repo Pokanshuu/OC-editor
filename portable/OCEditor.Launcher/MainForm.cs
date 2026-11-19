@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.Json;
 using System.Windows.Forms;
 using Microsoft.Web.WebView2.Core;
@@ -27,6 +28,100 @@ internal sealed class MainForm : Form
     private const int HTBOTTOMLEFT = 16;
     private const int HTBOTTOMRIGHT = 17;
     private const int WM_NCLBUTTONDOWN = 0x00A1;
+
+    private const int ERROR_INSUFFICIENT_BUFFER = 122;
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+    private static extern int GetCurrentPackageFamilyName(ref int packageFamilyNameLength, StringBuilder? packageFamilyName);
+
+    private static string? GetPackageFamilyName()
+    {
+        try
+        {
+            var length = 0;
+            var result = GetCurrentPackageFamilyName(ref length, null);
+            if (result != ERROR_INSUFFICIENT_BUFFER || length <= 1) return null;
+            var buffer = new StringBuilder(length);
+            result = GetCurrentPackageFamilyName(ref length, buffer);
+            return result == 0 ? buffer.ToString() : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static string ResolveUserDataFolder()
+    {
+        var explicitFolder = Environment.GetEnvironmentVariable("OC_EDITOR_USER_DATA")
+            ?? Environment.GetEnvironmentVariable("OC_STUDIO_USER_DATA");
+        if (!string.IsNullOrWhiteSpace(explicitFolder)) return explicitFolder;
+
+        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var familyName = GetPackageFamilyName();
+        if (!string.IsNullOrEmpty(familyName))
+        {
+            return Path.Combine(localAppData, "Packages", familyName, "LocalState", "OC editor", "WebView2");
+        }
+        return Path.Combine(localAppData, "OC editor", "WebView2");
+    }
+
+    private static void CopyDirectory(string source, string target)
+    {
+        var sourceRoot = new DirectoryInfo(source).FullName;
+        Directory.CreateDirectory(target);
+        foreach (var dir in Directory.GetDirectories(sourceRoot, "*", SearchOption.AllDirectories))
+        {
+            Directory.CreateDirectory(dir.Replace(sourceRoot, target));
+        }
+        foreach (var file in Directory.GetFiles(sourceRoot, "*", SearchOption.AllDirectories))
+        {
+            var destination = file.Replace(sourceRoot, target);
+            Directory.CreateDirectory(Path.GetDirectoryName(destination)!);
+            File.Copy(file, destination, overwrite: true);
+        }
+    }
+
+    private static void MigrateLegacyDataIfNeeded(string userDataFolder)
+    {
+        try
+        {
+            if (Directory.Exists(userDataFolder) && Directory.EnumerateFileSystemEntries(userDataFolder).Any()) return;
+
+            var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var sources = new List<string>
+            {
+                Path.Combine(localAppData, "OC editor", "WebView2"),
+                Path.Combine(localAppData, "OC Studio", "WebView2"),
+            };
+            var familyName = GetPackageFamilyName();
+            if (!string.IsNullOrEmpty(familyName))
+            {
+                sources.Add(Path.Combine(localAppData, "Packages", familyName, "LocalCache", "Local", "OC editor", "WebView2"));
+            }
+
+            foreach (var source in sources)
+            {
+                if (!Directory.Exists(source)) continue;
+                if (string.Equals(Path.GetFullPath(source), Path.GetFullPath(userDataFolder), StringComparison.OrdinalIgnoreCase)) continue;
+                try
+                {
+                    LauncherLog.Write($"migrating data from {source} to {userDataFolder}");
+                    CopyDirectory(source, userDataFolder);
+                    LauncherLog.Write("data migration finished");
+                    return;
+                }
+                catch (Exception error)
+                {
+                    LauncherLog.Write($"data migration from {source} failed: {error}");
+                }
+            }
+        }
+        catch (Exception error)
+        {
+            LauncherLog.Write($"data migration check failed: {error}");
+        }
+    }
 
     [DllImport("user32.dll")]
     private static extern bool ReleaseCapture();
@@ -116,47 +211,12 @@ internal sealed class MainForm : Form
             // 可能仍然加载旧 chunk。用 index.html 的写入时间做 cache-bust。
             var appUrl = $"{AppUrl}?v={File.GetLastWriteTimeUtc(Path.Combine(wwwroot, "index.html")).Ticks}";
 
-            var userDataFolder =
-                Environment.GetEnvironmentVariable("OC_EDITOR_USER_DATA")
-                ?? Environment.GetEnvironmentVariable("OC_STUDIO_USER_DATA")
-                ?? Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "OC editor",
-                    "WebView2");
+            var userDataFolder = ResolveUserDataFolder();
+            LauncherLog.Write($"user data folder: {userDataFolder} (packaged={GetPackageFamilyName() is not null})");
 
-            // 0.18.1 及更早版本的产品名是 "OC Studio"，数据放在
-            // %LOCALAPPDATA%\OC Studio\WebView2。改名后首次启动时把旧数据复制过来，
-            // 旧目录保留不动，方便回滚；升级不会丢角色、关系、图片和动画。
-            try
-            {
-                if (!Directory.Exists(userDataFolder))
-                {
-                    var legacyFolder = Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                        "OC Studio",
-                        "WebView2");
-                    if (Directory.Exists(legacyFolder))
-                    {
-                        var legacyRoot = new DirectoryInfo(legacyFolder).FullName;
-                        LauncherLog.Write($"migrating data from {legacyRoot}");
-                        Directory.CreateDirectory(userDataFolder);
-                        foreach (var dir in Directory.GetDirectories(legacyRoot, "*", SearchOption.AllDirectories))
-                        {
-                            Directory.CreateDirectory(dir.Replace(legacyRoot, userDataFolder));
-                        }
-                        foreach (var file in Directory.GetFiles(legacyRoot, "*", SearchOption.AllDirectories))
-                        {
-                            File.Copy(file, file.Replace(legacyRoot, userDataFolder), overwrite: false);
-                        }
-                        LauncherLog.Write("data migration finished");
-                    }
-                }
-            }
-            catch (Exception migrationError)
-            {
-                LauncherLog.Write($"data migration failed: {migrationError}");
-            }
-
+            // MSIX/Store 版必须使用包自己的 LocalState；%LOCALAPPDATA%\OC editor
+            // 会被文件虚拟化，WebView2 子进程看不到同一个目录。
+            MigrateLegacyDataIfNeeded(userDataFolder);
             Directory.CreateDirectory(userDataFolder);
 
             var options = new CoreWebView2EnvironmentOptions
